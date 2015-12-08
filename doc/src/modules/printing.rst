@@ -307,10 +307,26 @@ This class implements Python printing. Usage::
     x = Symbol('x')
     e = 5*x**3 + sin(x)
 
-ReprPrinter
+srepr
 -----------
 
 .. module:: sympy.printing.repr
+
+SymPy doesn’t use repr() for generating textual representation of expressions.
+
+Usage ::
+
+    >>> repr(5*x**3 + sin(x))
+    5*x**3 + sin(x)
+
+To get low level textual representation we can use function srepr
+
+Usage ::
+    >>> srepr(5*x**3 + sin(x))
+    Add(Mul(Integer(5), Pow(Symbol('x'), Integer(3))), sin(Symbol('x')))
+    >>> srepr(Integral(sqrt(1/x), x))
+    Integral(Pow(Pow(Symbol('x'), Integer(-1)), Rational(1, 2)), Tuple(Symbol('x')))
+
 
 This printer generates executable code. This code satisfies the identity
 ``eval(srepr(expr)) == expr``.
