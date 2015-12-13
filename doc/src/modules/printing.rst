@@ -326,7 +326,7 @@ Usage::
     >>> srepr(5*x**3 + sin(x))
     Add(Mul(Integer(5), Pow(Symbol('x'), Integer(3))), sin(Symbol('x')))
     >>> srepr(Integral(sqrt(1/x), x))
-    Integral(Pow(Pow(Symbol('x'), Integer(-1)), Rational(1, 2)), Tuple(Symbol('x')))
+    "Integral(Pow(Pow(Symbol('x'), Integer(-1)), Rational(1, 2)), Tuple(Symbol('x')))"
 
 
 This printer generates executable code. This code satisfies the identity
