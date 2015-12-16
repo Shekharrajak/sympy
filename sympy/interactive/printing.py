@@ -87,7 +87,14 @@ def _init_ipython_printing(ip, stringify_func, use_latex, euler, forecolor,
         # replace them with suitable subs
         o = o.replace(r'\operatorname', '')
         o = o.replace(r'\overline', r'\bar')
-        return latex_to_png(o)
+        # mathtext can't render some LaTeX commands. For example, it can't
+        # render any LaTeX environments such as array or matrix. So here we
+        # ensure that if mathtext fails to render, we return None.
+        try:
+            return latex_to_png(o)
+        except ValueError as e:
+            debug('matplotlib exception caught:', repr(e))
+            return None
 
     def _can_print_latex(o):
         """Return True if type o can be printed with LaTeX.
@@ -121,7 +128,9 @@ def _init_ipython_printing(ip, stringify_func, use_latex, euler, forecolor,
             s = latex(o, mode=latex_mode)
             try:
                 return _preview_wrapper(s)
-            except RuntimeError:
+            except RuntimeError as e:
+                debug('preview failed with:', repr(e),
+                      ' Falling back to matplotlib backend')
                 if latex_mode != 'inline':
                     s = latex(o, mode='inline')
                 return _matplotlib_wrapper(s)
@@ -132,12 +141,7 @@ def _init_ipython_printing(ip, stringify_func, use_latex, euler, forecolor,
         """
         if _can_print_latex(o):
             s = latex(o, mode='inline')
-            try:
-                return _matplotlib_wrapper(s)
-            except Exception:
-                # Matplotlib.mathtext cannot render some things (like
-                # matrices)
-                return None
+            return _matplotlib_wrapper(s)
 
     def _print_latex_text(o):
         """
@@ -172,8 +176,7 @@ def _init_ipython_printing(ip, stringify_func, use_latex, euler, forecolor,
         from sympy.core.basic import Basic
         from sympy.matrices.matrices import MatrixBase
         from sympy.physics.vector import Vector, Dyadic
-        printable_types = [Basic, MatrixBase, float, tuple, list, set,
-                frozenset, dict, Vector, Dyadic] + list(integer_types)
+        printable_types = [Basic, MatrixBase, float, tuple, list, set, frozenset, dict, Vector, Dyadic] + list(integer_types)
 
         plaintext_formatter = ip.display_formatter.formatters['text/plain']
 
@@ -193,7 +196,7 @@ def _init_ipython_printing(ip, stringify_func, use_latex, euler, forecolor,
             debug("init_printing: not using any png formatter")
             for cls in printable_types:
                 # Better way to set this, but currently does not work in IPython
-                #png_formatter.for_type(cls, None)
+                #  png_formatter.for_type(cls, None)
                 if cls in png_formatter.type_printers:
                     png_formatter.type_printers.pop(cls)
 
@@ -206,12 +209,21 @@ def _init_ipython_printing(ip, stringify_func, use_latex, euler, forecolor,
             debug("init_printing: not using text/latex formatter")
             for cls in printable_types:
                 # Better way to set this, but currently does not work in IPython
-                #latex_formatter.for_type(cls, None)
+                #  latex_formatter.for_type(cls, None)
                 if cls in latex_formatter.type_printers:
                     latex_formatter.type_printers.pop(cls)
 
     else:
         ip.set_hook('result_display', _result_display)
+
+
+def func1(order1, use_unicode1, wrap_line1, num_columns1):
+    return lambda expr: _stringify_func(expr, order=order1, use_unicode=use_unicode1, wrap_line=wrap_line1, num_columns=num_columns1)
+
+
+def func2(order1):
+    return lambda expr: _stringify_func(expr, order=order1)
+
 
 def _is_ipython(shell):
     """Is a shell instance an IPython shell?"""
@@ -399,14 +411,10 @@ def init_printing(pretty_print=True, order=None, use_unicode=None,
     else:
         _stringify_func = stringify_func
 
-        if pretty_print:
-            stringify_func = lambda expr: \
-                             _stringify_func(expr, order=order,
-                                             use_unicode=use_unicode,
-                                             wrap_line=wrap_line,
-                                             num_columns=num_columns)
+        if pretty_print is True:
+            stringify_func = func1(order, use_unicode, wrap_line, num_columns)
         else:
-            stringify_func = lambda expr: _stringify_func(expr, order=order)
+            stringify_func = func2(order)
 
     if in_ipython:
         _init_ipython_printing(ip, stringify_func, use_latex, euler,
