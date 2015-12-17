@@ -307,7 +307,7 @@ This class implements Python printing. Usage::
     x = Symbol('x')
     e = 5*x**3 + sin(x)
 
-srepr
+Srepr
 -----------
 
 .. module:: sympy.printing.repr
@@ -318,8 +318,12 @@ Usage::
 
     >>> repr(5*x**3 + sin(x))
     '       5*x**3 + sin(x)'
+    >>> expr = exp(-x)*log(1-x)*2
+    >>> repr(expr)
+    '2∗exp(−x)∗log(−x+1)'
+    
 
-To get low level textual representation we can use function srepr
+To get low level textual representation we use function srepr.
 
 Usage::
 
@@ -327,7 +331,27 @@ Usage::
     Add(Mul(Integer(5), Pow(Symbol('x'), Integer(3))), sin(Symbol('x')))
     >>> srepr(Integral(sqrt(1/x), x))
     "Integral(Pow(Pow(Symbol('x'), Integer(-1)), Rational(1, 2)), Tuple(Symbol('x')))"
-
+    >>> expr = exp(-x)*log(1-x)*2
+    >>> srepr(expr)
+    "Mul(Integer(2),exp(Mul(Integer(−1),Symbol(′x′))),log(Add(Mul(Integer(−1),Symbol(′x′)),Integer(1)))"
+    
+    also can be used for other modules such as Function module.
+    
+    >>> from sympy import Function
+    >>> f = sympy.Function("f")
+    >>> print(sympy.srepr(f(x).func))
+    Function('f')
+    
+    * The srepr() function prints a low level representation of the expression.
+    * To walk the whole expression tree,Sympy have another function preorder_traversal() ;prints in preorder fashion.
+    
+    Example
+    -------
+    
+    >>> list(preorder_traversal(expr))
+    [2e−xlog(−x+1),2,e−x,−x,−1,x,log(−x+1),−x+1,1,−x,−1,x]
+    
+    
 
 This printer generates executable code. This code satisfies the identity
 ``eval(srepr(expr)) == expr``.
