@@ -342,11 +342,11 @@ Usage::
     >>> print(sympy.srepr(f(x).func))
     Function('f')
     
-    * The srepr() function prints a low level representation of the expression.
-    * To walk the whole expression tree,Sympy have another function preorder_traversal() ;prints in preorder fashion.
+* The srepr() function prints a low level representation of the expression.
+* To walk the whole expression tree,Sympy have another function preorder_traversal() ;prints in preorder fashion.
     
-    Example
-    -------
+Example
+-------
     
     >>> list(preorder_traversal(expr))
     [2e−xlog(−x+1),2,e−x,−x,−1,x,log(−x+1),−x+1,1,−x,−1,x]
