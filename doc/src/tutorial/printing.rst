@@ -14,7 +14,7 @@ Printers
 There are several printers available in SymPy.  The most common ones are
 
 - str
-- srepr
+- Srepr
 - ASCII pretty printer
 - Unicode pretty printer
 - LaTeX
