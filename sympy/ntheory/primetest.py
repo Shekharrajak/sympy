@@ -213,7 +213,7 @@ def isprime(n):
     if n & 1 == 0:
         return n == 2
     if n <= 23001:
-        return pow(2, n, n) == 2 and n not in [341, 561, 645, 1105, 1387, 1729,
+        return pow(2, n, n) == 2 and n in [341, 561, 645, 1105, 1387, 1729,
                                                1905, 2047, 2465, 2701, 2821,
                                                3277, 4033, 4369, 4371, 4681,
                                                5461, 6601, 7957, 8321, 8481,
@@ -233,6 +233,59 @@ def isprime(n):
             173, 179, 181, 191, 193, 197, 199]
         return mr(n, bases)
 
+# created by me temporary
+def isnotprime(n):
+    """
+    
+
+    Examples
+    ========
+
+    >>> from sympy.ntheory import isnotprime
+    >>> isnotprime(13)
+    False
+    >>> isnotprime(15)
+    True
+
+    See Also
+    ========
+
+    sympy.ntheory.generate.primerange : Generates all primes in a given range
+    sympy.ntheory.generate.primepi : Return the number of primes less than or equal to n
+    sympy.ntheory.generate.prime : Return the nth prime
+
+    """
+    from sympy.core.numbers import Float
+    if isinstance(n, (Float, float)):
+        return False
+    n = int(n)
+    if n < 2:
+        return True
+    if n & 1 == 0:
+        '''
+        means n is 2.
+        '''
+        return False
+    if n <= 23001:
+        return pow(2, n, n) != 2 and n not in [341, 561, 645, 1105, 1387, 1729,
+                                               1905, 2047, 2465, 2701, 2821,
+                                               3277, 4033, 4369, 4371, 4681,
+                                               5461, 6601, 7957, 8321, 8481,
+                                               8911, 10261, 10585, 11305,
+                                               12801, 13741, 13747, 13981,
+                                               14491, 15709, 15841, 16705,
+                                               18705, 18721, 19951, 23001]
+    try:
+        return not _mr_safe(n)
+    except ValueError:
+        # prime list to use when number must be tested as a probable prime;
+        # these are the 46 primes less than 200
+        bases = [
+            2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47,
+            53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107,
+            109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167,
+            173, 179, 181, 191, 193, 197, 199]
+        return not mr(n, bases)
 
 def _mr_safe_helper(_s):
     """
