@@ -4,6 +4,7 @@ from sympy import Symbol
 from sympy.utilities.pytest import XFAIL
 
 x = Symbol('x')
+y = Symbol('y')
 
 
 def test_decompogen():
@@ -13,6 +14,7 @@ def test_decompogen():
     assert decompogen(sin(sqrt(cos(x**2 + 1))), x) == [sin(x), sqrt(x), cos(x), x**2 + 1]
     assert decompogen(Abs(cos(x)**2 + 3*cos(x) - 4), x) == [Abs(x), x**2 + 3*x - 4, cos(x)]
     assert decompogen(sin(x)**2 + sin(x)-sqrt(3)/2 ,x) == [x**2 + x - sqrt(3)/2, sin(x)]
+    assert decompogen(Abs(cos(y)**2 + 3*cos(x) - 4), x) == [Abs(x), 3*x + cos(y)**2 - 4, cos(x)]
 
 
 def test_decompogen_poly():
