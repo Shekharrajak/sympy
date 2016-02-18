@@ -12,6 +12,7 @@ def test_decompogen():
     assert decompogen(sqrt(6*x**2 - 5), x) == [sqrt(x), 6*x**2 - 5]
     assert decompogen(sin(sqrt(cos(x**2 + 1))), x) == [sin(x), sqrt(x), cos(x), x**2 + 1]
     assert decompogen(Abs(cos(x)**2 + 3*cos(x) - 4), x) == [Abs(x), x**2 + 3*x - 4, cos(x)]
+    assert decompogen(sin(x)**2 + sin(x)-sqrt(3)/2 ,x) == [x**2 + x - sqrt(3)/2, sin(x)]
 
 
 def test_decompogen_poly():

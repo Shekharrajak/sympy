@@ -30,6 +30,7 @@ def decompogen(f, symbol):
     [x**2 - x - 1, x**2 + x]
 
     """
+    from sympy.core.symbol import Symbol
     f = sympify(f)
     result = []
 
