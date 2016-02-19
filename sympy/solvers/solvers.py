@@ -1001,25 +1001,25 @@ def solve(f, *symbols, **flags):
     # give an implicit solution
     seen = set()
     non_inverts = set()
-    # for fi in f:
-    #     pot = preorder_traversal(fi)
-    #     for p in pot:
-    #         if not isinstance(p, Expr) or isinstance(p, Piecewise):
-    #             pass
-    #         elif (isinstance(p, bool) or
-    #                 not p.args or
-    #                 p in symset or
-    #                 p.is_Add or p.is_Mul or
-    #                 p.is_Pow and not implicit or
-    #                 p.is_Function and not implicit) and p.func not in (re, im):
-    #             continue
-    #         elif not p in seen:
-    #             seen.add(p)
-    #             if p.free_symbols & symset:
-    #                 non_inverts.add(p)
-    #             else:
-    #                 continue
-    #         pot.skip()
+    for fi in f:
+        pot = preorder_traversal(fi)
+        for p in pot:
+            if not isinstance(p, Expr) or isinstance(p, Piecewise):
+                pass
+            elif (isinstance(p, bool) or
+                    not p.args or
+                    p in symset or
+                    p.is_Add or p.is_Mul or
+                    p.is_Pow and not implicit or
+                    p.is_Function and not implicit) and p.func not in (re, im):
+                continue
+            elif not p in seen:
+                seen.add(p)
+                if p.free_symbols & symset:
+                    non_inverts.add(p)
+                else:
+                    continue
+            pot.skip()
     del seen
     non_inverts = dict(list(zip(non_inverts, [Dummy() for d in non_inverts])))
     f = [fi.subs(non_inverts) for fi in f]
