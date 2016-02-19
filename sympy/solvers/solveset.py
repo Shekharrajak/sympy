@@ -389,6 +389,161 @@ def _solve_real_trig(f, symbol):
         return ConditionSet(symbol, Eq(f_original, 0), S.Reals)
 
 
+def _tsolve(eq, sym, **flags):
+    """
+    Helper for _solve that solves a transcendental equation with respect
+    to the given symbol. Various equations containing powers and logarithms,
+    can be solved.
+
+    There is currently no guarantee that all solutions will be returned or
+    that a real solution will be favored over a complex one.
+
+    Either a list of potential solutions will be returned or None will be
+    returned (in the case that no method was known to get a solution
+    for the equation). All other errors (like the inability to cast an
+    expression as a Poly) are unhandled.
+
+    Examples
+    ========
+
+    >>> from sympy import log
+    >>> from sympy.solveset.solveset import _tsolve as tsolve
+    >>> from sympy.abc import x
+
+    >>> tsolve(3**(2*x + 5) - 4, x)
+    [-5/2 + log(2)/log(3), (-5*log(3)/2 + log(2) + I*pi)/log(3)]
+
+    >>> tsolve(log(x) + 2*x, x)
+    [LambertW(2)/2]
+
+    """
+    if 'tsolve_saw' not in flags:
+        flags['tsolve_saw'] = []
+    if eq in flags['tsolve_saw']:
+        return None
+    else:
+        flags['tsolve_saw'].append(eq)
+
+    rhs, lhs = _invert(eq, sym)
+
+    if lhs == sym:
+        return [rhs]
+    try:
+        if lhs.is_Add:
+            # it's time to try factoring; powdenest is used
+            # to try get powers in standard form for better factoring
+            f = factor(powdenest(lhs - rhs))
+            if f.is_Mul:
+                return _solve(f, sym, **flags)
+            if rhs:
+                f = logcombine(lhs, force=flags.get('force', True))
+                if f.count(log) != lhs.count(log):
+                    if f.func is log:
+                        return _solve(f.args[0] - exp(rhs), sym, **flags)
+                    return _tsolve(f - rhs, sym)
+
+        elif lhs.is_Pow:
+            if lhs.exp.is_Integer:
+                if lhs - rhs != eq:
+                    return _solve(lhs - rhs, sym, **flags)
+            elif sym not in lhs.exp.free_symbols:
+                return _solve(lhs.base - rhs**(1/lhs.exp), sym, **flags)
+            elif not rhs and sym in lhs.exp.free_symbols:
+                # f(x)**g(x) only has solutions where f(x) == 0 and g(x) != 0 at
+                # the same place
+                sol_base = _solve(lhs.base, sym, **flags)
+                if not sol_base:
+                    return sol_base  # no solutions to remove so return now
+                return list(ordered(set(sol_base) - set(
+                    _solve(lhs.exp, sym, **flags))))
+            elif (rhs is not S.Zero and
+                        lhs.base.is_positive and
+                        lhs.exp.is_real):
+                return _solve(lhs.exp*log(lhs.base) - log(rhs), sym, **flags)
+            elif lhs.base == 0 and rhs == 1:
+                return _solve(lhs.exp, sym, **flags)
+
+        elif lhs.is_Mul and rhs.is_positive:
+            llhs = expand_log(log(lhs))
+            if llhs.is_Add:
+                return _solve(llhs - log(rhs), sym, **flags)
+
+        elif lhs.is_Function and len(lhs.args) == 1 and lhs.func in multi_inverses:
+            # sin(x) = 1/3 -> x - asin(1/3) & x - (pi - asin(1/3))
+            soln = []
+            for i in multi_inverses[lhs.func](rhs):
+                soln.extend(_solve(lhs.args[0] - i, sym, **flags))
+            return list(ordered(soln))
+
+        rewrite = lhs.rewrite(exp)
+        if rewrite != lhs:
+            return _solve(rewrite - rhs, sym, **flags)
+    except NotImplementedError:
+        pass
+
+    # maybe it is a lambert pattern
+    if flags.pop('bivariate', True):
+        # lambert forms may need some help being recognized, e.g. changing
+        # 2**(3*x) + x**3*log(2)**3 + 3*x**2*log(2)**2 + 3*x*log(2) + 1
+        # to 2**(3*x) + (x*log(2) + 1)**3
+        g = _filtered_gens(eq.as_poly(), sym)
+        up_or_log = set()
+        for gi in g:
+            if gi.func is exp or gi.func is log:
+                up_or_log.add(gi)
+            elif gi.is_Pow:
+                gisimp = powdenest(expand_power_exp(gi))
+                if gisimp.is_Pow and sym in gisimp.exp.free_symbols:
+                    up_or_log.add(gi)
+        down = g.difference(up_or_log)
+        eq_down = expand_log(expand_power_exp(eq)).subs(
+            dict(list(zip(up_or_log, [0]*len(up_or_log)))))
+        eq = expand_power_exp(factor(eq_down, deep=True) + (eq - eq_down))
+        rhs, lhs = _invert(eq, sym)
+        if lhs.has(sym):
+            try:
+                poly = lhs.as_poly()
+                g = _filtered_gens(poly, sym)
+                return _solve_lambert(lhs - rhs, sym, g)
+            except NotImplementedError:
+                # maybe it's a convoluted function
+                if len(g) == 2:
+                    try:
+                        gpu = bivariate_type(lhs - rhs, *g)
+                        if gpu is None:
+                            raise NotImplementedError
+                        g, p, u = gpu
+                        flags['bivariate'] = False
+                        inversion = _tsolve(g - u, sym, **flags)
+                        if inversion:
+                            sol = _solve(p, u, **flags)
+                            return list(ordered(set([i.subs(u, s)
+                                for i in inversion for s in sol])))
+                    except NotImplementedError:
+                        pass
+                else:
+                    pass
+
+    if flags.pop('force', True):
+        flags['force'] = False
+        pos, reps = posify(lhs - rhs)
+        for u, s in reps.items():
+            if s == sym:
+                break
+        else:
+            u = sym
+        if pos.has(u):
+            try:
+                soln = _solve(pos, u, **flags)
+                return list(ordered([s.subs(reps) for s in soln]))
+            except NotImplementedError:
+                pass
+        else:
+            pass  # here for coverage
+
+    return  # here for coverage
+
+
 def _solve_as_poly(f, symbol, domain=S.Complexes):
     """
     Solve the equation using polynomial techniques if it already is a
@@ -432,7 +587,11 @@ def _solve_as_poly(f, symbol, domain=S.Complexes):
                 if lhs == symbol:
                     result = Union(*[rhs_s.subs(y, s) for s in poly_solns])
                 else:
-                    result = ConditionSet(symbol, Eq(f, 0), domain)
+                    try:
+                        iv = _solve_as_poly(lhs - list(rhs_s)[0], symbol,domain)
+                        result = Union(*[i.subs(t, s) for i in iv for s in poly_solns])
+                    except:
+                        result = ConditionSet(symbol, Eq(f, 0), domain)
         else:
             result = ConditionSet(symbol, Eq(f, 0), domain)
 
