@@ -43,7 +43,7 @@ def decompogen(f, symbol):
 
     # ===== Convert to Polynomial ===== #
     fp = Poly(f)
-    gens = filter(lambda x: symbol in x.atoms(Symbol) , fp.gens)
+    gens = list(filter(lambda x: symbol in x.atoms(Symbol) , fp.gens))
 
     if len(gens) == 1 and gens[0] != symbol:
         f1 = f.subs(gens[0], symbol)
