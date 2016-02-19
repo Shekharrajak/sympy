@@ -1594,7 +1594,7 @@ def _solve(f, *symbols, **flags):
                     rv = set([inv.subs(isym, xi) for xi in _solve(eq, isym, **flags)])
                 else:
                     try:
-                        rv = set(simplify(_solve(eq, symbol, **flags)))
+                        rv = set(_solve(eq, symbol, **flags))
                     except NotImplementedError:
                         rv = None
                 if rv is not None:
