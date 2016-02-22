@@ -748,13 +748,13 @@ def _solveset(f, symbol, domain, _check=False):
     else:
         lhs, rhs_s = inverter(f, 0, symbol)
         if lhs == symbol:
-        # do some very minimal simplification since
-        # repeated inversion may have left the result
-        # in a state that other solvers (e.g. poly)
-        # would have simplified; this is done here
-        # rather than in the inverter since here it
-        # is only done once whereas there it would
-        # be repeated for each step of the inversion
+            # do some very minimal simplification since
+            # repeated inversion may have left the result
+            # in a state that other solvers (e.g. poly)
+            # would have simplified; this is done here
+            # rather than in the inverter since here it
+            # is only done once whereas there it would
+            # be repeated for each step of the inversion
             if isinstance(rhs_s, FiniteSet):
                 rhs_s = FiniteSet(*[Mul(*
                 signsimp(i).as_content_primitive())
