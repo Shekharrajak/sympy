@@ -1093,3 +1093,7 @@ def test_issue_8715():
         (Interval.open(-2, oo) - FiniteSet(0))
     assert solveset(eq.subs(x,log(x)), x, S.Reals) == \
         Interval.open(exp(-2), oo) - FiniteSet(1)
+
+def test_issue_10809():
+    soln = ImageSet(Lambda(n, 2*n*pi), S.Integers)
+    assert solveset(exp(I*x)-1,x) == soln

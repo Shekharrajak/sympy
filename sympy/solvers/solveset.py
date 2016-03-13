@@ -120,6 +120,13 @@ def _invert_real(f, g_ys, symbol):
             )):
         if len(f.args) > 1:
             raise ValueError("Only functions with one argument are supported.")
+        if isinstance(f, exp) and any(s.is_imaginary for s in list(f.atoms())):
+            try:
+                soln = _invert_complex(f, g_ys, symbol)
+                soln =  symbol,soln[1].intersection(S.Reals)
+                return soln
+            except:
+                pass            
         return _invert_real(f.args[0],
                             imageset(Lambda(n, f.inverse()(n)), g_ys),
                             symbol)
