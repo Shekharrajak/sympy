@@ -37,6 +37,9 @@ import glob
 
 mpmath_version = '0.19'
 
+# This directory
+dir_setup = os.path.dirname(os.path.realpath(__file__))
+
 try:
     from setuptools import setup, Command
 except ImportError:
@@ -55,8 +58,8 @@ except ImportError:
 PY3 = sys.version_info[0] > 2
 
 # Make sure I have the right Python version.
-if sys.version_info[:2] < (2, 6):
-    print("SymPy requires Python 2.6 or newer. Python %d.%d detected" % sys.version_info[:2])
+if sys.version_info[:2] < (2, 7):
+    print("SymPy requires Python 2.7 or newer. Python %d.%d detected" % sys.version_info[:2])
     sys.exit(-1)
 
 # Check that this list is uptodate against the result of the command:
@@ -67,6 +70,7 @@ modules = [
     'sympy.benchmarks',
     'sympy.calculus',
     'sympy.categories',
+    'sympy.codegen',
     'sympy.combinatorics',
     'sympy.concrete',
     'sympy.core',
@@ -82,6 +86,7 @@ modules = [
     'sympy.functions.special',
     'sympy.functions.special.benchmarks',
     'sympy.geometry',
+    'sympy.holonomic',
     'sympy.integrals',
     'sympy.integrals.benchmarks',
     'sympy.interactive',
@@ -176,7 +181,6 @@ class clean(Command):
         pass
 
     def run(self):
-        dir_setup = os.path.dirname(os.path.realpath(__file__))
         curr_dir = os.getcwd()
         for root, dirs, files in os.walk(dir_setup):
             for file in files:
@@ -251,11 +255,11 @@ class run_benchmarks(Command):
 
 # Check that this list is uptodate against the result of the command:
 # $ python bin/generate_test_list.py
-
 tests = [
     'sympy.assumptions.tests',
     'sympy.calculus.tests',
     'sympy.categories.tests',
+    'sympy.codegen.tests',
     'sympy.combinatorics.tests',
     'sympy.concrete.tests',
     'sympy.core.tests',
@@ -267,6 +271,7 @@ tests = [
     'sympy.functions.elementary.tests',
     'sympy.functions.special.tests',
     'sympy.geometry.tests',
+    'sympy.holonomic.tests',
     'sympy.integrals.tests',
     'sympy.interactive.tests',
     'sympy.liealgebras.tests',
@@ -310,8 +315,11 @@ to become a full-featured computer algebra system (CAS) while keeping the code
 as simple as possible in order to be comprehensible and easily extensible.
 SymPy is written entirely in Python.'''
 
-exec(open('sympy/release.py').read())
-with open('sympy/__init__.py') as f:
+with open(os.path.join(dir_setup, 'sympy', 'release.py')) as f:
+    # Defines __version__
+    exec(f.read())
+
+with open(os.path.join(dir_setup, 'sympy', '__init__.py')) as f:
     long_description = f.read().split('"""')[1]
 
 setup(name='sympy',
@@ -349,6 +357,7 @@ setup(name='sympy',
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         ],
       install_requires=['mpmath>=%s' % mpmath_version]
       )

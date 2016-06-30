@@ -103,6 +103,10 @@ invert_complex = _invert
 
 
 def invert_real(f_x, y, x, domain=S.Reals):
+    """
+    Inverts a real-valued function. Same as _invert, but sets
+    the domain to ``S.Reals`` before inverting.
+    """
     return _invert(f_x, y, x, domain)
 
 
@@ -297,7 +301,7 @@ def _is_finite_with_finite_vars(f, domain=S.Complexes):
         A.setdefault('real', domain.is_subset(S.Reals))
         return A
 
-    reps = dict([(s, Dummy(**assumptions(s))) for s in f.free_symbols])
+    reps = {s: Dummy(**assumptions(s)) for s in f.free_symbols}
     return f.xreplace(reps).is_finite
 
 
