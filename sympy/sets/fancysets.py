@@ -245,6 +245,7 @@ class ImageSet(Set):
     ========
     sympy.sets.sets.imageset
     """
+
     def __new__(cls, lamda, base_set):
         if not isinstance(lamda, Lambda):
             raise ValueError('first argument must be a Lambda')
@@ -526,6 +527,116 @@ class ImageSet(Set):
                 return
             else:
                 return
+
+    def _union(self, other):
+        """
+
+        This function should only be used internally.
+        See Set._union for docstring
+
+        Used within the :class:`Union` class
+
+        This function club imageset `other` with `self` if there is difference
+        of `pi` or `2*pi` and returns this new imageset otherwise None.
+
+        Returns
+        =======
+        self._union(other) returns a new, joined set if self knows how
+        to join itself with other, otherwise it returns ``None``.
+
+        Examples
+        ========
+
+        >>> from sympy import Lambda
+        >>> from sympy.sets.fancysets import ImageSet
+        >>> from sympy import pprint, Union
+        >>> from sympy.core import Dummy, pi, S, Symbol
+        >>> n = Dummy('n')
+        >>> img1 = ImageSet(Lambda(n, 2*n*pi + 3*pi/4), S.Integers)
+        >>> img2 = ImageSet(Lambda(n, 2*n*pi + 7*pi/4), S.Integers)
+        >>> pprint(img1._union(img2), use_unicode=False)
+                3*pi
+        {n*pi + ---- | n in Integers()}
+                 4
+
+        """
+
+        from sympy.core import pi
+        from sympy.polys import Poly
+        from sympy.simplify import simplify
+        from sympy.polys.polyerrors import PolynomialError
+
+        if other is S.EmptySet:
+            return self
+        if isinstance(other, ImageSet):
+            try:
+                # use one dummy variable n_self
+                var_self = self.lamda_vars
+                if len(var_self) > 1:
+                    msg = 'Not Implemented for multiple lambda variables. \
+                    %s contains these lambda variables : %s'
+                    raise NotImplementedError(
+                        filldedent(msg % (self, var_self)))
+                var_self = var_self[0]
+                base = other.base_set
+                var_final = other.lamda_vars
+                if len(var_final) > 1:
+                    msg = 'Not Implemented for multiple lambda variables. \
+                    %s contains these lambda variables : %s'
+                    raise NotImplementedError(
+                        filldedent(msg % (other, var_final)))
+                var_final = var_final[0]
+
+                # Extracting expr
+                lamb_expr = self.lamda.expr
+                base_self = self.base_set
+                if Poly(lamb_expr, var_self).is_linear:
+                    self_expr = lamb_expr
+                else:
+                    msg = 'Not Implemented non linear ImageSet lambda expr. \
+                    %s contains these lambda variables : %s'
+                    raise NotImplementedError(
+                        filldedent(msg % (self, lamb_expr)))
+                if base_self.is_superset(base):
+                    # take the superset
+                    base = base_self
+
+                lamb_expr = other.lamda.expr
+                if Poly(lamb_expr, var_final).is_linear:
+                    final_expr = lamb_expr
+                else:
+                    msg = 'Not Implemented non linear ImageSet lambda expr. \
+                    %s contains these lambda variables : %s'
+                    raise NotImplementedError(
+                        filldedent(msg % (self, lamb_expr)))
+
+                if simplify(
+                        final_expr.subs(var_final, var_self) -
+                        self_expr) % (2 * pi) == pi:
+                    # (2*x*pi + pi + expr1) - ( 2*x*pi  + exp1) = pi
+                    # can be => x*pi + expr1
+                    final_expr = pi * var_self + list(
+                        self.put_values(var_self, 0))[0]
+                    ans = ImageSet(Lambda(var_self, final_expr), base)
+                elif simplify(
+                        final_expr -
+                        self_expr) % (2 * pi) == 0:
+                    # (2*x*pi + expr1) - ( 2*x*pi  + 2*pi + exp1)= -2*pi
+                    # can be => 2*x*pi + expr1
+                    final_expr = 2 * pi * var_self + list(self.put_values(
+                        var_self, 0))[0]
+                    ans = ImageSet(Lambda(var_self, final_expr), base)
+                else:
+                    return None
+                return ans
+
+            except (
+                NotImplementedError,
+                ValueError, PolynomialError
+            ):
+                return None
+        else:
+            return None
 
 
 class Range(Set):

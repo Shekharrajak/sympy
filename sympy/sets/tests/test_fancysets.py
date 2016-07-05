@@ -96,6 +96,27 @@ def test_image_is_ImageSet():
     assert isinstance(imageset(x, sqrt(sin(x)), Range(5)), ImageSet)
 
 
+def test_union_imageset():
+    img1 = ImageSet(Lambda(x, 2*x*pi), S.Integers)
+    img2 = ImageSet(Lambda(x, 2*x*pi + pi), S.Integers)
+    final = ImageSet(Lambda(x, x*pi), S.Integers)
+    assert Union(img1, img2) == final
+
+    img1 = ImageSet(Lambda(x, 2*x*pi + pi/4), S.Integers)
+    img2 = ImageSet(Lambda(x, 2*x*pi + 5*pi/4), S.Integers)
+    final = ImageSet(Lambda(x, x*pi + pi/4), S.Integers)
+    assert Union(img1, img2) == final
+
+    img1 = ImageSet(Lambda(x, 2*x*pi - pi/3), S.Integers)
+    img2 = ImageSet(Lambda(x, 2*x*pi + 2*pi/3), S.Integers)
+    img3 = ImageSet(Lambda(x, 2*x*pi - 2*pi/3), S.Integers)
+    img4 = ImageSet(Lambda(x, 2*x*pi + pi/3), S.Integers)
+    f1 = ImageSet(Lambda(x, x*pi - pi/3), S.Integers)
+    f2 = ImageSet(Lambda(x, x*pi - 2*pi/3), S.Integers)
+    final = Union(f1, f2, evaluate=False)
+    assert Union(img1, img2, img3, img4) == final
+
+
 @XFAIL
 def test_halfcircle():
     # This test sometimes works and sometimes doesn't.

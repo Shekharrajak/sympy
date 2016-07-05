@@ -230,6 +230,8 @@ def _invert_complex(f, g_ys, symbol):
 
     if isinstance(f, exp):
         if isinstance(g_ys, FiniteSet):
+            # dummy should be real number
+            n = Dummy('n', real=True)
             exp_invs = Union(*[imageset(Lambda(n, I*(2*n*pi + arg(g_y)) +
                                                log(Abs(g_y))), S.Integers)
                                for g_y in g_ys if g_y != 0])
@@ -729,11 +731,11 @@ def solveset(f, symbol=None, domain=S.Complexes):
     but there may be some slight difference:
 
     >>> pprint(solveset(sin(x)/x,x), use_unicode=False)
-    ({2*n*pi | n in Integers()} \ {0}) U ({2*n*pi + pi | n in Integers()} \ {0})
+    {n*pi | n in Integers()} \ {0}
 
     >>> p = Symbol('p', positive=True)
     >>> pprint(solveset(sin(p)/p, p), use_unicode=False)
-    {2*n*pi | n in Integers()} U {2*n*pi + pi | n in Integers()}
+    {n*pi | n in Integers()}
 
     * Inequalities can be solved over the real domain only. Use of a complex
       domain leads to a NotImplementedError.
