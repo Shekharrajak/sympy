@@ -21,7 +21,7 @@ from sympy.functions.elementary.trigonometric import (TrigonometricFunction,
                                                       HyperbolicFunction)
 from sympy.functions.elementary.miscellaneous import real_root
 from sympy.sets import (FiniteSet, EmptySet, imageset, Interval, Intersection,
-                        Union, ConditionSet)
+                        Union, ConditionSet, ImageSet)
 from sympy.matrices import Matrix
 from sympy.polys import (roots, Poly, degree, together, PolynomialError,
                          RootOf)
@@ -96,7 +96,8 @@ def _invert(f_x, y, x, domain=S.Complexes):
         x, s = _invert_real(f_x, FiniteSet(y), x)
     else:
         x, s = _invert_complex(f_x, FiniteSet(y), x)
-    return x, s.intersection(domain) if isinstance(s, FiniteSet) else s
+    return x, s.intersection(domain) if isinstance(
+        s, (FiniteSet, ImageSet)) else s
 
 
 invert_complex = _invert
