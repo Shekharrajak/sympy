@@ -96,8 +96,12 @@ def _invert(f_x, y, x, domain=S.Complexes):
         x, s = _invert_real(f_x, FiniteSet(y), x)
     else:
         x, s = _invert_complex(f_x, FiniteSet(y), x)
-    return x, s.intersection(domain) if isinstance(
-        s, (FiniteSet, ImageSet)) else s
+
+    if domain not in [S.Reals, S.Complexes]:
+        s = s.intersection(domain) if isinstance(s, (
+            FiniteSet, ImageSet)) else s
+
+    return x, s
 
 
 invert_complex = _invert
@@ -126,7 +130,7 @@ def _invert_real(f, g_ys, symbol):
         if len(f.args) > 1:
             raise ValueError("Only functions with one argument are supported.")
         return _invert_real(f.args[0],
-                            imageset(Lambda(n, f.inverse()(n)), g_ys),
+                            imageset(Lambda(n, f.inverse()(n)), g_ys).intersect(S.Reals),
                             symbol)
 
     if isinstance(f, Abs):
@@ -155,7 +159,8 @@ def _invert_real(f, g_ys, symbol):
         expo_has_sym = expo.has(symbol)
 
         if not expo_has_sym:
-            res = imageset(Lambda(n, real_root(n, expo)), g_ys)
+            res = imageset(
+                Lambda(n, real_root(n, expo)), g_ys).intersection(S.Reals)
             if expo.is_rational:
                 numer, denom = expo.as_numer_denom()
                 if numer == S.One or numer == - S.One:

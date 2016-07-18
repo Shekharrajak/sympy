@@ -365,6 +365,9 @@ class ImageSet(Set):
 
     def _intersect(self, other):
         from sympy.solvers.diophantine import diophantine
+        from sympy.solvers.solveset import (solveset_real,
+                                            invert_real, invert_complex,
+                                            solveset)
         if self.base_set is S.Integers:
             g = None
             if isinstance(other, ImageSet) and other.base_set is S.Integers:
@@ -394,8 +397,9 @@ class ImageSet(Set):
                 t = nsol.free_symbols.pop()
                 return imageset(Lambda(n, f.subs(a, nsol.subs(t, n))), S.Integers)
 
-        if other == S.Reals:
-            from sympy.solvers.solveset import solveset_real
+        real_complx = other == S.Reals or S.Complexes
+
+        if real_complx:
             from sympy.core.function import expand_complex
             if len(self.lamda.variables) > 1:
                 return None
@@ -409,14 +413,14 @@ class ImageSet(Set):
             re, im = f_.as_real_imag()
             im = expand_complex(im)
 
-            return imageset(Lambda(n_, re),
-                            self.base_set.intersect(
-                                solveset_real(im, n_)))
+            if other == S.Reals:
+                return imageset(Lambda(n_, re),
+                                self.base_set.intersect(
+                                    solveset_real(im, n_)))
+            else:
+                return imageset(Lambda(n_, f), self.base_set)
 
         elif isinstance(other, Interval):
-            from sympy.solvers.solveset import (invert_real, invert_complex,
-                                                solveset)
-
             f = self.lamda.expr
             n = self.lamda.variables[0]
             base_set = self.base_set
