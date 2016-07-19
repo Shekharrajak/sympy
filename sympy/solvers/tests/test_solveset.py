@@ -91,8 +91,10 @@ def test_invert_real():
     assert invert_real(sin(x), y, x) == \
         (x, imageset(Lambda(n, n*pi + (-1)**n*asin(y)), S.Integers))
 
-    assert invert_real(sin(exp(x)), y, x) == \
-        (x, imageset(Lambda(n, log((-1)**n*asin(y) + n*pi)), S.Integers))
+    base_set = ConditionSet(n, arg((-1)**_n*asin(y) + n*pi), S.Integers)
+    img_set = ImageSet(Lambda(n, log(Abs((-1)**n*asin(y) + n*pi))), base_set)
+    soln = (x, img_set)
+    assert invert_real(sin(exp(x)), y, x) == soln
 
     assert invert_real(csc(x), y, x) == \
         (x, imageset(Lambda(n, n*pi + (-1)**n*acsc(y)), S.Integers))
@@ -733,7 +735,7 @@ def test_solve_trig():
 
     assert solveset_complex(cos(x) - S.Half, x) == \
         Union(imageset(Lambda(n, 2*n*pi + pi/3), S.Integers),
-              imageset(Lambda(n, 2*n*pi - pi/3), S.Integers))
+              imageset(Lambda(n, 2*n*pi + 5*pi/3), S.Integers))
 
     y, a = symbols('y,a')
     assert solveset(sin(y + a) - sin(y), a, domain=S.Reals) == \
@@ -1102,5 +1104,5 @@ def test_issue_11174():
 
     eq = sqrt(r)*Abs(tan(t))/sqrt(tan(t)**2 + 1) + x*tan(t)
     s = -sqrt(r)*Abs(tan(t))/(sqrt(tan(t)**2 + 1)*tan(t))
-    soln = Intersection(S.Reals, FiniteSet(s))
+    soln = FiniteSet(s)
     assert solveset(eq, x, S.Reals) == soln

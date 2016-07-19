@@ -10,7 +10,7 @@ from sympy.core.singleton import Singleton, S
 from sympy.core.symbol import Dummy, symbols, Wild
 from sympy.core.sympify import _sympify, sympify, converter
 from sympy.sets.sets import (Set, Interval, Intersection, EmptySet, Union,
-                             FiniteSet, imageset)
+                             FiniteSet, imageset, Complement)
 from sympy.sets.conditionset import ConditionSet
 from sympy.utilities.misc import filldedent, func_name
 
@@ -326,8 +326,12 @@ class ImageSet(Set):
             if isinstance(L.expr, Expr):
                 # scalar -> scalar mapping
                 solnsSet = solveset(L.expr - other, x)
+                complement = None
                 if solnsSet.is_FiniteSet:
                     solns = list(solnsSet)
+                elif isinstance(solnsSet, Complement):
+                    solns = solnsSet.args[0]
+                    complement = solnsSet.args[1]
                 else:
                     msgset = solnsSet
             else:
@@ -353,8 +357,10 @@ class ImageSet(Set):
             been implemented.''' % (msgset, other)))
         for soln in solns:
             try:
-                if soln in self.base_set:
-                    return S.true
+                base = self.base_set
+                if soln in base:
+                    if complement and complement not in base:
+                        return S.true
             except TypeError:
                 return self.base_set.contains(soln.evalf())
         return S.false
@@ -397,7 +403,7 @@ class ImageSet(Set):
                 t = nsol.free_symbols.pop()
                 return imageset(Lambda(n, f.subs(a, nsol.subs(t, n))), S.Integers)
 
-        real_complx = other == S.Reals or S.Complexes
+        real_complx = other in [S.Reals, S.Complexes]
 
         if real_complx:
             from sympy.core.function import expand_complex
@@ -411,12 +417,14 @@ class ImageSet(Set):
             f_ = f.subs(n, n_)
 
             re, im = f_.as_real_imag()
+            im_orig = im
             im = expand_complex(im)
 
             if other == S.Reals:
-                return imageset(Lambda(n_, re),
-                                self.base_set.intersect(
-                                    solveset_real(im, n_)))
+                base = self.base_set.intersect(solveset_real(im, n_))
+                if isinstance(base, ConditionSet):
+                    base = ConditionSet(n, im_orig, self.base_set)
+                return imageset(Lambda(n_, re), base)
             else:
                 return imageset(Lambda(n_, f), self.base_set)
 
